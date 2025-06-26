@@ -1,60 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Submit Your Band - Bandmaps</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Modern bold font -->
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8">
+  <title>Submit Your Band</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
+      font-family: sans-serif;
       margin: 0;
-      padding: 40px 20px;
-      background-color: #fff;
+      padding: 20px;
+      background: #fff;
       color: #000;
-      font-family: 'Oswald', sans-serif;
+    }
+    h1 {
       text-align: center;
     }
-
-    h1 {
-      font-size: 42px;
-      font-weight: 700;
-      margin-bottom: 30px;
-      letter-spacing: 2px;
-    }
-
-    iframe {
-      width: 100%;
-      max-width: 700px;
-      height: 1800px;
-      border: none;
-      background-color: #fff;
-    }
-
-    .container {
-      max-width: 760px;
+    form {
+      max-width: 600px;
       margin: auto;
     }
-
-    a.back {
-      color: #000;
-      text-decoration: underline;
-      font-size: 14px;
-      display: inline-block;
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    #map {
+      height: 300px;
+      margin-top: 15px;
+    }
+    button {
       margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 16px;
+      background: black;
+      color: white;
+      border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Submit Your Band</h1>
 
-    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSeueBPXejDnGzfS6V3IG8YcaTmPGFwMPQ0QFEAE5WW4KYflig/viewform?embedded=true" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+  <h1>Submit Your Band</h1>
 
-    <a href="index.html" class="back">← Back to map</a>
-  </div>
+  <form action="https://sheet.best/api/sheets/3747de06-5460-4172-b3db-5d60c6021cd4" method="POST">
+    <label>Band Name</label>
+    <input type="text" name="Name" required>
+
+    <label>Genre</label>
+    <input type="text" name="Genre" required>
+
+    <label>City</label>
+    <input type="text" name="City" required>
+
+    <label>Bio</label>
+    <textarea name="Bio" rows="4"></textarea>
+
+    <label>Spotify URL</label>
+    <input type="url" name="Spotify">
+
+    <label>Instagram URL</label>
+    <input type="url" name="Instagram">
+
+    <label>YouTube URL</label>
+    <input type="url" name="YouTube">
+
+    <label>Click on the map to choose your location:</label>
+    <div id="map"></div>
+
+    <label>Latitude</label>
+    <input type="text" name="Latitude" id="lat" required readonly>
+
+    <label>Longitude</label>
+    <input type="text" name="Longitude" id="lng" required readonly>
+
+    <button type="submit">Submit Band</button>
+  </form>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker;
+
+    map.on('click', function(e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+    });
+  </script>
+
 </body>
 </html>
+
 

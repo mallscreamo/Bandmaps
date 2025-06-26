@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Band Details</title>
+  <style>
+    body {
+      font-family: 'Oswald', sans-serif;
+      background-color: #000;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 5px #b8860b;
+    }
+    .band-info {
+      background-color: #111;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #b8860b;
+    }
+    .band-info p {
+      font-size: 1.2rem;
+      margin: 10px 0;
+      line-height: 1.4;
+    }
+    .links a {
+      color: #b8860b;
+      text-decoration: none;
+      margin-right: 15px;
+      font-weight: 600;
+    }
+    .links a:hover {
+      text-decoration: underline;
+    }
+    .band-photo {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #b8860b;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="bandName">Loading...</h1>
+  <div class="band-info" id="bandDetails">
+    <p>Loading band details...</p>
+  </div>
+
+  <script>
+    const sheetURL = 'https://api.sheetbest.com/sheets/3747de06-5460-4172-b3db-5d60c6021cd4';
+
+    // Get 'name' parameter from URL query string
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const bandName = getQueryParam('name');
+
+    const bandNameElem = document.getElementById('bandName');
+    const bandDetailsElem = document.getElementById('bandDetails');
+
+    if (!bandName) {
+      bandNameElem.textContent = 'No band specified';
+      bandDetailsElem.innerHTML = '<p>Please provide a band name in the URL.</p>';
+    } else {
+      bandNameElem.textContent = decodeURIComponent(bandName).toUpperCase();
+
+      fetch(sheetURL)
+        .then(res => res.json())
+        .then(data => {
+          // Find band by matching name case-insensitively
+          const band = data.find(b => b.Name && b.Name.toLowerCase() === bandName.toLowerCase());
+
+          if (!band) {
+            bandDetailsElem.innerHTML = `<p>Band "${bandName}" not found.</p>`;
+            return;
+          }
+
+          // Build HTML with all info
+          let html = '';
+
+          // Optional photo if you have a photo URL field (replace 'Photo' if you added one)
+          if (band.Photo) {
+            html += `<img src="${band.Photo}" alt="Photo of ${band.Name}" class="band-photo" />`;
+          }
+
+          html += `<p><strong>Genre:</strong> ${band.Genre || 'N/A'}</p>`;
+          html += `<p><strong>City:</strong> ${band.City || 'N/A'}</p>`;
+          html += `<p><strong>Country:</strong> ${band.Country || 'N/A'}</p>`;
+          html += `<p><strong>Latitude:</strong> ${band.Latitude || 'N/A'}</p>`;
+          html += `<p><strong>Longitude:</strong> ${band.Longitude || 'N/A'}</p>`;
+          html += `<p><strong>Bio:</strong> ${band.Bio || 'N/A'}</p>`;
+
+          // Links section
+          html += `<div class="links"><strong>Links:</strong><br>`;
+
+          const linkFields = ['Spotify', 'Apple Music', 'Youtube', 'Instagram', 'Tiktok', 'X', 'Bandcamp'];
+          linkFields.forEach(field => {
+            if (band[field] && band[field].trim() !== '') {
+              // Display link text as field name (replace X with Twitter maybe)
+              let displayName = field === 'X' ? 'Twitter' : field;
+              html += `<a href="${band[field]}" target="_blank" rel="noopener noreferrer">${displayName}</a>`;
+            }
+          });
+
+          html += `</div>`;
+
+          bandDetailsElem.innerHTML = html;
+        })
+        .catch(err => {
+          bandDetailsElem.innerHTML = `<p>Error loading band details.</p>`;
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>

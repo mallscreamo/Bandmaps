@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Submit Your Band</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Oswald', sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 12px #222;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: none;
+      background: #222;
+      color: #eee;
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+    }
+    input:focus,
+    textarea:focus {
+      outline: 2px solid #999;
+      background: #333;
+    }
+    #map {
+      height: 300px;
+      margin-top: 15px;
+      border-radius: 6px;
+      border: 1px solid #444;
+    }
+    button {
+      margin-top: 25px;
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      background: #fff;
+      color: #000;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #ccc;
+    }
+    .note {
+      font-size: 13px;
+      color: #777;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .coord-inputs {
+      display: flex;
+      gap: 12px;
+      margin-top: 5px;
+    }
+    .coord-inputs input {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Submit Your Band</h1>
+
+  <form id="bandForm">
+    <label for="name">Name *</label>
+    <input type="text" id="name" name="Name" required />
+
+    <label for="genre">Genre *</label>
+    <input type="text" id="genre" name="Genre" required />
+
+    <label for="city">City *</label>
+    <input type="text" id="city" name="City" required />
+
+    <label for="country">Country *</label>
+    <input type="text" id="country" name="Country" required />
+
+    <label for="bio">Bio</label>
+    <textarea id="bio" name="Bio" rows="4"></textarea>
+
+    <label for="spotify">Spotify URL</label>
+    <input type="url" id="spotify" name="Spotify" />
+
+    <label for="applemusic">Apple Music URL</label>
+    <input type="url" id="applemusic" name="Apple Music" />
+
+    <label for="youtube">Youtube URL</label>
+    <input type="url" id="youtube" name="Youtube" />
+
+    <label for="instagram">Instagram URL</label>
+    <input type="url" id="instagram" name="Instagram" />
+
+    <label for="tiktok">Tiktok URL</label>
+    <input type="url" id="tiktok" name="Tiktok" />
+
+    <label for="x">X (Twitter) URL</label>
+    <input type="url" id="x" name="X" />
+
+    <label for="bandcamp">Bandcamp URL</label>
+    <input type="url" id="bandcamp" name="Bandcamp" />
+
+    <label>Pick your location on the map *</label>
+    <div id="map"></div>
+    <div class="note">Click anywhere on the map to drop a pin and set your band's location.</div>
+
+    <div class="coord-inputs">
+      <div>
+        <label for="latitude">Latitude *</label>
+        <input
+          type="text"
+          id="latitude"
+          name="Latitude"
+          readonly
+          required
+          placeholder="Click map to set"
+        />
+      </div>
+      <div>
+        <label for="longitude">Longitude *</label>
+        <input
+          type="text"
+          id="longitude"
+          name="Longitude"
+          readonly
+          required
+          placeholder="Click map to set"
+        />
+      </div>
+    </div>
+
+    <button type="submit">Submit Band</button>
+  </form>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const SHEET_URL = 'https://sheet.best/api/sheets/3747de06-5460-4172-b3db-5d60c6021cd4';
+
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    let marker;
+
+    map.on('click', function (e) {
+      const { lat, lng } = e.latlng;
+      document.getElementById('latitude').value = lat.toFixed(6);
+      document.getElementById('longitude').value = lng.toFixed(6);
+
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+    });
+
+    const form = document.getElementById('bandForm');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!document.getElementById('latitude').value || !document.getElementById('longitude').value) {
+        alert('Please select a location on the map.');
+        return;
+      }
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(SHEET_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+          alert('Band submitted successfully!');
+          form.reset();
+          if (marker) {
+            map.removeLayer(marker);
+            marker = null;
+          }
+        } else {
+          alert('Error submitting band. Please try again.');
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
+      }
+    });
+  </script>
+
+</body>
+</html>

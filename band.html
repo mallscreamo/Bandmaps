@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Band Details</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap');
+
+  body {
+    margin: 0;
+    background: #121212;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1db954; /* Spotify green */
+    padding: 40px 20px 30px 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgb(0 0 0 / 0.5);
+  }
+
+  header h1 {
+    font-weight: 900;
+    font-size: 3.5rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+    color: #fff;
+  }
+
+  main {
+    flex: 1;
+    max-width: 900px;
+    margin: 40px auto;
+    background: #181818;
+    border-radius: 16px;
+    padding: 30px 40px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+  }
+
+  .band-photo {
+    width: 100%;
+    max-height: 350px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 20px #1db954;
+  }
+
+  .info-group {
+    margin-bottom: 25px;
+  }
+
+  .info-label {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #b3b3b3;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .info-value {
+    font-weight: 400;
+    font-size: 1.3rem;
+    color: #fff;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+
+  .bio {
+    font-style: italic;
+    background: #282828;
+    padding: 20px;
+    border-radius: 10px;
+    color: #ddd;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    margin-top: 10px;
+  }
+
+  .links {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .link-button {
+    background: #1db954;
+    color: #121212;
+    padding: 12px 22px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+    box-shadow: 0 4px 10px #1db954aa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .link-button:hover {
+    background: #17a44c;
+  }
+
+  /* Placeholder icon circles */
+  .link-icon {
+    background: #121212;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    main {
+      padding: 20px;
+      margin: 20px;
+    }
+    header h1 {
+      font-size: 2.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="bandName">Loading...</h1>
+  </header>
+
+  <main id="bandDetails">
+    <p>Loading band details...</p>
+  </main>
+
+  <script>
+    const sheetURL = 'https://api.sheetbest.com/sheets/3747de06-5460-4172-b3db-5d60c6021cd4';
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const bandName = getQueryParam('name');
+    const bandNameElem = document.getElementById('bandName');
+    const bandDetailsElem = document.getElementById('bandDetails');
+
+    if (!bandName) {
+      bandNameElem.textContent = 'No band specified';
+      bandDetailsElem.innerHTML = '<p>Please provide a band name in the URL.</p>';
+    } else {
+      bandNameElem.textContent = decodeURIComponent(bandName).toUpperCase();
+
+      fetch(sheetURL)
+        .then(res => res.json())
+        .then(data => {
+          const band = data.find(b => b.Name && b.Name.toLowerCase() === bandName.toLowerCase());
+
+          if (!band) {
+            bandDetailsElem.innerHTML = `<p>Band "${bandName}" not found.</p>`;
+            return;
+          }
+
+          // Photo field (replace 'Photo' with your actual photo field name if exists)
+          let photoHTML = '';
+          if (band.Photo && band.Photo.trim() !== '') {
+            photoHTML = `<img src="${band.Photo}" alt="Photo of ${band.Name}" class="band-photo" />`;
+          }
+
+          // Build band info html with all fields
+          const infoFields = [
+            { label: 'Genre', value: band.Genre },
+            { label: 'City', value: band.City },
+            { label: 'Country', value: band.Country },
+            { label: 'Latitude', value: band.Latitude },
+            { label: 'Longitude', value: band.Longitude }
+          ];
+
+          let html = photoHTML;
+
+          infoFields.forEach(field => {
+            html += `
+              <div class="info-group">
+                <div class="info-label">${field.label}</div>
+                <div class="info-value">${field.value || 'N/A'}</div>
+              </div>
+            `;
+          });
+
+          // Bio
+          html += `
+            <div class="info-group">
+              <div class="info-label">Bio</div>
+              <div class="bio">${band.Bio || 'No bio available.'}</div>
+            </div>
+          `;
+
+          // Links
+          const links = [
+            { key: 'Spotify', label: 'Spotify' },
+            { key: 'Apple Music', label: 'Apple Music' },
+            { key: 'Youtube', label: 'YouTube' },
+            { key: 'Instagram', label: 'Instagram' },
+            { key: 'Tiktok', label: 'TikTok' },
+            { key: 'X', label: 'Twitter' },
+            { key: 'Bandcamp', label: 'Bandcamp' }
+          ];
+
+          html += `<div class="links">`;
+
+          links.forEach(link => {
+            const url = band[link.key];
+            if (url && url.trim() !== '') {
+              html += `
+                <a class="link-button" href="${url}" target="_blank" rel="noopener noreferrer">
+                  <span class="link-icon"></span>${link.label}
+                </a>
+              `;
+            }
+          });
+
+          html += `</div>`;
+
+          bandDetailsElem.innerHTML = html;
+        })
+        .catch(err => {
+          bandDetailsElem.innerHTML = `<p>Error loading band details.</p>`;
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>

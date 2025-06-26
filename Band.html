@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Band Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Oswald', sans-serif;
+      margin: 20px;
+      max-width: 600px;
+    }
+    h1 {
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+    }
+    a {
+      color: #0af;
+      text-decoration: underline;
+    }
+    .field-label {
+      font-weight: 700;
+      margin-top: 10px;
+    }
+    .field-value {
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html">← Back to Map</a>
+
+  <div id="bandDetails">
+    <p>Loading band info...</p>
+  </div>
+
+  <script>
+    const SHEET_JSON_URL = 'https://api.sheetbest.com/sheets/3747de06-5460-4172-b3db-5d60c6021cd4';
+
+    // Utility: get URL param by name
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    const bandName = getQueryParam('name');
+
+    if (!bandName) {
+      document.getElementById('bandDetails').innerHTML = '<p>No band specified.</p>';
+      throw new Error('No band name in URL');
+    }
+
+    fetch(SHEET_JSON_URL)
+      .then(res => res.json())
+      .then(data => {
+        // Find band by exact Name match (case sensitive)
+        const band = data.find(b => b.Name === bandName);
+        if (!band) {
+          document.getElementById('bandDetails').innerHTML = `<p>Band "${bandName}" not found.</p>`;
+          return;
+        }
+
+        // Build HTML with all info, only show fields that exist and are not empty
+        let html = `<h1>${band.Name}</h1>`;
+        html += `<p><strong>Genre:</strong> ${band.Genre || 'N/A'}</p>`;
+        html += `<p><strong>Location:</strong> ${band.City || ''}${band.City && band.Country ? ', ' : ''}${band.Country || ''}</p>`;
+        html += band.Bio ? `<p><strong>Bio:</strong> ${band.Bio}</p>` : '';
+
+        // Social links helper
+        const socials = ['Spotify', 'Apple Music', 'Youtube', 'Instagram', 'Tiktok', 'X', 'Bandcamp'];
+        socials.forEach(site => {
+          if (band[site] && band[site].trim()) {
+            html += `<p><strong>${site}:</strong> <a href="${band[site]}" target="_blank" rel="noopener noreferrer">${band[site]}</a></p>`;
+          }
+        });
+
+        document.getElementById('bandDetails').innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById('bandDetails').innerHTML = `<p>Error loading band data.</p>`;
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

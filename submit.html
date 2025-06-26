@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Band Submission with Map Picker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #fff;
+      color: #000;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    #map {
+      height: 300px; /* VERY IMPORTANT */
+      margin-top: 10px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 16px;
+      background: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Submit Your Band</h1>
+
+  <form action="https://sheet.best/api/sheets/3747de06-5460-4172-b3db-5d60c6021cd4" method="POST">
+    <label for="name">Band Name</label>
+    <input type="text" id="name" name="Name" required />
+
+    <label for="genre">Genre</label>
+    <input type="text" id="genre" name="Genre" required />
+
+    <label for="city">City</label>
+    <input type="text" id="city" name="City" required />
+
+    <label for="bio">Bio</label>
+    <textarea id="bio" name="Bio" rows="4"></textarea>
+
+    <label for="spotify">Spotify URL</label>
+    <input type="url" id="spotify" name="Spotify" />
+
+    <label for="instagram">Instagram URL</label>
+    <input type="url" id="instagram" name="Instagram" />
+
+    <label for="youtube">YouTube URL</label>
+    <input type="url" id="youtube" name="YouTube" />
+
+    <label>Click on the map to select your location:</label>
+    <div id="map"></div>
+
+    <label for="lat">Latitude</label>
+    <input type="text" id="lat" name="Latitude" readonly required />
+
+    <label for="lng">Longitude</label>
+    <input type="text" id="lng" name="Longitude" readonly required />
+
+    <button type="submit">Submit Band</button>
+  </form>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([20, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    let marker;
+
+    map.on('click', function (e) {
+      const { lat, lng } = e.latlng;
+
+      // Update input fields
+      document.getElementById('lat').value = lat.toFixed(6);
+      document.getElementById('lng').value = lng.toFixed(6);
+
+      // Add or move the marker
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+    });
+  </script>
+
+</body>
+</html>
+
+
+

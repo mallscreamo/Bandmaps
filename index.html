@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Worldwide Band Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000"/>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: #000;
+      color: #fff;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      left: 300px;
+      right: 0;
+      bottom: 0;
+    }
+
+    #sidebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      background: #111;
+      border-right: 3px solid #fff;
+      padding: 0;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.6);
+    }
+
+    header {
+      background-color: #000;
+      padding: 24px 20px;
+      text-align: center;
+      font-size: 80px;
+      font-weight: 800;
+      border-bottom: 2px solid #444;
+      color: #fff;
+      letter-spacing: 1px;
+      line-height: 1.2em;
+    }
+
+    .filters {
+      padding: 20px;
+    }
+
+    .filters h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .filters select,
+    .filters input[type="text"] {
+      width: calc(100% - 2px);
+      margin-bottom: 14px;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background-color: #222;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      box-sizing: border-box;
+    }
+
+    .filters select:focus,
+    .filters input[type="text"]:focus {
+      outline: none;
+      border-color: #999;
+      background-color: #2c2c2c;
+    }
+
+    .band-list {
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .band-list ul {
+      padding-left: 20px;
+    }
+
+    .band-list li {
+      margin-bottom: 5px;
+    }
+
+    .submit-link {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .submit-link a {
+      color: #fff;
+      text-decoration: underline;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      #sidebar {
+        position: static;
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid #fff;
+      }
+
+      #map {
+        position: static;
+        width: 100%;
+        height: 60vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <header>BAND<br>MAPS</header>
+    <div class="filters">
+      <h2>FILTER BANDS</h2>
+      <input type="text" id="searchInput" placeholder="Search by name...">
+      <select id="genreFilter">
+        <option value="">All Genres</option>
+      </select>
+      <select id="cityFilter">
+        <option value="">All Cities</option>
+      </select>
+      <select id="countryFilter">
+        <option value="">All Countries</option>
+      </select>
+    </div>
+    <div class="band-list">
+      <h2 style="padding-left: 20px;">A-Z BANDS</h2>
+      <ul id="bandList"></ul>
+    </div>
+    <div class="submit-link">
+      <a href="submit.html">Submit Your Band</a>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const SHEET_JSON_URL = 'https://api.sheetbest.com/sheets/3747de06-5460-4172-b3db-5d60c6021cd4';
+
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const genreFilter = document.getElementById('genreFilter');
+    const cityFilter = document.getElementById('cityFilter');
+    const countryFilter = document.getElementById('countryFilter');
+    const searchInput = document.getElementById('searchInput');
+    const bandList = document.getElementById('bandList');
+
+    let allBands = [];
+    let markers = [];
+
+    fetch(SHEET_JSON_URL)
+      .then(res => res.json())
+      .then(data => {
+        allBands = data.filter(b => b.Latitude && b.Longitude);
+        populateFilters(allBands);
+        renderMarkers(allBands);
+        renderBandList(allBands);
+      });
+
+    function populateFilters(data) {
+      const genres = new Set();
+      const cities = new Set();
+      const countries = new Set();
+
+      data.forEach(b => {
+        if (b.Genre) genres.add(b.Genre.trim());
+        if (b.City) cities.add(b.City.trim());
+        if (b.Country) countries.add(b.Country.trim());
+      });
+
+      for (const [filter, values] of [[genreFilter, genres], [cityFilter, cities], [countryFilter, countries]]) {
+        values.forEach(val => {
+          const option = document.createElement('option');
+          option.value = val;
+          option.textContent = val;
+          filter.appendChild(option);
+        });
+      }
+
+      genreFilter.addEventListener('change', applyFilters);
+      cityFilter.addEventListener('change', applyFilters);
+      countryFilter.addEventListener('change', applyFilters);
+      searchInput.addEventListener('input', applyFilters);
+    }
+
+    function applyFilters() {
+      const selectedGenre = genreFilter.value;
+      const selectedCity = cityFilter.value;
+      const selectedCountry = countryFilter.value;
+      const searchQuery = searchInput.value.toLowerCase();
+
+      const filtered = allBands.filter(b => {
+        const matchGenre = !selectedGenre || b.Genre.trim() === selectedGenre;
+        const matchCity = !selectedCity || b.City.trim() === selectedCity;
+        const matchCountry = !selectedCountry || b.Country.trim() === selectedCountry;
+        const matchName = !searchQuery || (b.Name && b.Name.toLowerCase().includes(searchQuery));
+        return matchGenre && matchCity && matchCountry && matchName;
+      });
+
+      renderMarkers(filtered);
+      renderBandList(filtered);
+    }
+
+    function renderMarkers(bands) {
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      bands.forEach(band => {
+        const lat = parseFloat(band.Latitude);
+        const lon = parseFloat(band.Longitude);
+        if (isNaN(lat) || isNaN(lon)) return;
+
+        const marker = L.marker([lat, lon]).addTo(map);
+        marker.bindPopup(`
+          <strong>${band.Name}</strong><br>
+          <em>${band.Genre}</em><br>
+          <a href="band.html?name=${encodeURIComponent(band.Name)}" target="_blank">View Details</a>
+        `);
+        markers.push(marker);
+      });
+    }
+
+    function renderBandList(bands) {
+      bandList.innerHTML = '';
+      const sorted = [...bands].sort((a, b) => a.Name.localeCompare(b.Name));
+      sorted.forEach(band => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `band.html?name=${encodeURIComponent(band.Name)}`;
+        a.textContent = band.Name;
+        a.style.color = '#fff';
+        a.style.textDecoration = 'none';
+        li.appendChild(a);
+        bandList.appendChild(li);
+      });
+    }
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service worker registered.'))
+        .catch(err => console.error('Service worker error:', err));
+    }
+  </script>
+</body>
+</html>

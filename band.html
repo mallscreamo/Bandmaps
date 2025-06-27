@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Band Details</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .header {
+      position: relative;
+      height: 240px;
+      background-size: cover;
+      background-position: center center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 64px;
+      font-weight: 800;
+      color: #1E90FF;
+      background: transparent;
+      z-index: 2;
+      text-align: center;
+      user-select: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+    .content {
+      padding: 30px 40px;
+    }
+    .info-section {
+      margin-bottom: 24px;
+    }
+    .info-section strong {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #1E90FF;
+      font-size: 18px;
+    }
+    .info-section p, .info-section span {
+      margin: 0;
+      font-size: 16px;
+      color: #222;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+    .social-links {
+      margin-top: 20px;
+    }
+    .social-links a {
+      margin-right: 20px;
+      color: #1E90FF;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: color 0.3s ease;
+    }
+    .social-links a:hover {
+      color: rgba(30, 144, 255, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header" id="header" style="background-image: url('');">
+      <div class="overlay"></div>
+      <h1 id="bandName">Band Name</h1>
+    </div>
+    <div class="content">
+      <div class="info-section">
+        <strong>Genre:</strong>
+        <span id="bandGenre">-</span>
+      </div>
+      <div class="info-section">
+        <strong>City:</strong>
+        <span id="bandCity">-</span>
+      </div>
+      <div class="info-section">
+        <strong>Country:</strong>
+        <span id="bandCountry">-</span>
+      </div>
+      <div class="info-section">
+        <strong>Bio:</strong>
+        <p id="bandBio">-</p>
+      </div>
+      <div class="social-links">
+        <strong>Follow:</strong>
+        <a id="spotifyLink" href="#" target="_blank" rel="noopener noreferrer">Spotify</a>
+        <a id="appleMusicLink" href="#" target="_blank" rel="noopener noreferrer">Apple Music</a>
+        <a id="youtubeLink" href="#" target="_blank" rel="noopener noreferrer">YouTube</a>
+        <a id="instagramLink" href="#" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a id="tiktokLink" href="#" target="_blank" rel="noopener noreferrer">TikTok</a>
+        <a id="xLink" href="#" target="_blank" rel="noopener noreferrer">X</a>
+        <a id="bandcampLink" href="#" target="_blank" rel="noopener noreferrer">Bandcamp</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const bandNameParam = urlParams.get('name');
+
+    fetch('https://api.sheetbest.com/sheets/3747de06-5460-4172-b3db-5d60c6021cd4')
+      .then(res => res.json())
+      .then(data => {
+        const band = data.find(b => b.Name === bandNameParam);
+        if (!band) return;
+
+        const header = document.getElementById('header');
+        if (band.PhotoURL && band.PhotoURL.trim() !== '') {
+          header.style.backgroundImage = `url('${band.PhotoURL}')`;
+        } else {
+          header.style.backgroundImage = 'none';
+          header.style.backgroundColor = '#ccc';
+        }
+
+        document.getElementById('bandName').textContent = band.Name || '-';
+        document.getElementById('bandGenre').textContent = band.Genre || '-';
+        document.getElementById('bandCity').textContent = band.City || '-';
+        document.getElementById('bandCountry').textContent = band.Country || '-';
+        document.getElementById('bandBio').textContent = band.Bio || '-';
+
+        const socials = [
+          { id: 'spotifyLink', url: band.Spotify },
+          { id: 'appleMusicLink', url: band['Apple Music'] },
+          { id: 'youtubeLink', url: band.Youtube },
+          { id: 'instagramLink', url: band.Instagram },
+          { id: 'tiktokLink', url: band.Tiktok },
+          { id: 'xLink', url: band.X },
+          { id: 'bandcampLink', url: band.Bandcamp }
+        ];
+        socials.forEach(({ id, url }) => {
+          const el = document.getElementById(id);
+          if (url && url.trim() !== '') {
+            el.href = url;
+            el.style.display = 'inline';
+          } else {
+            el.style.display = 'none';
+          }
+        });
+      });
+  </script>
+</body>
+</html>

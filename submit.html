@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Submit Your Band</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 700px;
+      width: 100%;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 30px 40px;
+    }
+    h1 {
+      color: #1E90FF;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 36px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #1E90FF;
+      font-size: 16px;
+    }
+    input[type="text"],
+    input[type="url"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 18px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 15px;
+      box-sizing: border-box;
+      color: #222;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    button {
+      background-color: #1E90FF;
+      color: #fff;
+      border: none;
+      padding: 14px 0;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0f5ec1;
+    }
+    .info-text {
+      font-size: 13px;
+      color: #555;
+      margin-top: -14px;
+      margin-bottom: 18px;
+    }
+    #message {
+      margin-top: 20px;
+      font-weight: 600;
+    }
+    #map {
+      height: 300px;
+      margin-bottom: 18px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-sA+N0d9RRqSmFqIHZ+fO6rjzrm79yOxn9Skh9D5TtVU="
+    crossorigin=""
+  />
+</head>
+<body>
+  <div class="container">
+    <h1>Submit Your Band</h1>
+    <form id="bandForm">
+      <label for="name">Band Name *</label>
+      <input type="text" id="name" name="Name" required />
+
+      <label for="genre">Genre *</label>
+      <input type="text" id="genre" name="Genre" required />
+
+      <label for="city">City *</label>
+      <input type="text" id="city" name="City" required />
+
+      <label for="country">Country *</label>
+      <input type="text" id="country" name="Country" required />
+
+      <label for="latitude">Latitude *</label>
+      <input type="text" id="latitude" name="Latitude" readonly required />
+
+      <label for="longitude">Longitude *</label>
+      <input type="text" id="longitude" name="Longitude" readonly required />
+
+      <label for="bio">Bio</label>
+      <textarea id="bio" name="Bio"></textarea>
+
+      <label for="photoURL">Photo URL</label>
+      <input type="url" id="photoURL" name="PhotoURL" placeholder="Paste direct image URL here" />
+      <div class="info-text">Example: https://example.com/your-band-photo.jpg</div>
+
+      <label for="spotify">Spotify</label>
+      <input type="url" id="spotify" name="Spotify" />
+
+      <label for="appleMusic">Apple Music</label>
+      <input type="url" id="appleMusic" name="Apple Music" />
+
+      <label for="youtube">YouTube</label>
+      <input type="url" id="youtube" name="Youtube" />
+
+      <label for="instagram">Instagram</label>
+      <input type="url" id="instagram" name="Instagram" />
+
+      <label for="tiktok">TikTok</label>
+      <input type="url" id="tiktok" name="Tiktok" />
+
+      <label for="x">X (Twitter)</label>
+      <input type="url" id="x" name="X" />
+
+      <label for="bandcamp">Bandcamp</label>
+      <input type="url" id="bandcamp" name="Bandcamp" />
+
+      <label>Select Location on Map *</label>
+      <div id="map"></div>
+
+      <button type="submit">Submit Band</button>
+    </form>
+    <div id="message"></div>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    integrity="sha256-nMNlpuaDPrql/nJJtXh3rC1aKsiw0N+Yf3q3X8aAqaM="
+    crossorigin=""
+  ></script>
+  <script>
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    let marker;
+    map.on('click', function (e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
+    });
+
+    const form = document.getElementById('bandForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message.textContent = '';
+
+      // Gather form data
+      const formData = new FormData(form);
+      // Convert to object for API
+      const data = {};
+      formData.forEach((value, key) => (data[key] = value.trim()));
+
+      // Basic validation
+      if (!data.Latitude || !data.Longitude) {
+        message.style.color = 'red';
+        message.textContent = 'Please select a location on the map.';
+        return;
+      }
+
+      // POST to your Google Sheet API endpoint here
+      try {
+        const response = await fetch('YOUR_GOOGLE_SHEET_API_POST_ENDPOINT', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to submit');
+
+        message.style.color = 'green';
+        message.textContent = 'Thank you! Your band has been submitted successfully.';
+        form.reset();
+        if (marker) {
+          map.removeLayer(marker);
+          marker = null;
+        }
+      } catch (err) {
+        message.style.color = 'red';
+        message.textContent = 'Error submitting band. Please try again later.';
+      }
+    });
+  </script>
+</body>
+</html>
